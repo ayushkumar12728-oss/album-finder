@@ -57,6 +57,17 @@ function formatDuration(ms) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+// Spotify's Retry-After on a 429 can range from a few seconds to,
+// in some Dev Mode cases, many hours — so show whatever it actually is.
+function formatWaitTime(seconds) {
+  if (!seconds || seconds <= 0) return "in a little while";
+  if (seconds < 60) return `in about ${seconds}s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `in about ${minutes} minute${minutes !== 1 ? "s" : ""}`;
+  const hours = Math.round(minutes / 60);
+  return `in about ${hours} hour${hours !== 1 ? "s" : ""}`;
+}
+
 function showError(msg) {
   errorMsg.textContent = msg;
   errorMsg.classList.remove("hidden");
@@ -114,10 +125,9 @@ async function spotifyFetch(url, _retried = false) {
   }
 
   if (res.status === 429) {
-    const retryAfter = Number(res.headers.get("Retry-After")) || 30;
-    throw new Error(
-      `Spotify is rate-limiting requests right now. Please wait ${retryAfter}s and try again.`
-    );
+    const retrySeconds = Number(res.headers.get("Retry-After"));
+    const waitText = formatWaitTime(retrySeconds);
+    throw new Error(`Spotify is rate-limiting this app right now. Try again ${waitText}.`);
   }
 
   if (res.status >= 500 && !_retried) {
