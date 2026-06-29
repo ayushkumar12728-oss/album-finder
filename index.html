@@ -3,50 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Album Finder 🎵</title>
+  <title>AlbumFinder 🎵</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
-  <header>
-    <div class="logo">🎵 AlbumFinder</div>
-    <p class="tagline">Discover every album from your favorite artist</p>
-  </header>
+  <!-- Animated background orbs -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
 
-  <main>
-    <section class="search-section">
-      <div class="search-box">
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🎵</span>
+      <span class="logo-text">Album<span class="logo-accent">Finder</span></span>
+    </div>
+    <p class="tagline">Discover every release from your favorite artist</p>
+
+    <!-- Search -->
+    <div class="search-box">
+      <div class="search-inner">
+        <span class="search-icon">🔍</span>
         <input
           type="text"
           id="artistInput"
-          placeholder="Enter artist name… e.g. Taylor Swift"
+          placeholder="Search an artist… e.g. Arijit Singh"
           autocomplete="off"
         />
         <button id="searchBtn">Search</button>
       </div>
       <div id="errorMsg" class="error-msg hidden"></div>
-    </section>
+    </div>
+  </header>
 
-    <!-- Artist Profile Card -->
-    <section id="artistSection" class="artist-section hidden">
-      <div class="artist-card">
-        <img id="artistImage" src="" alt="Artist" />
+  <main>
+
+    <!-- Artist Card -->
+    <section id="artistSection" class="hidden">
+      <div class="artist-card glass">
+        <div class="artist-img-wrap">
+          <img id="artistImage" src="" alt="Artist"/>
+          <div class="artist-img-glow"></div>
+        </div>
         <div class="artist-info">
+          <p class="artist-label">Artist</p>
           <h2 id="artistName"></h2>
           <p id="artistGenres" class="genres"></p>
           <div class="artist-stats">
-            <div class="stat">
-              <span id="artistFollowers"></span>
-              <label>Followers</label>
+            <div class="stat-pill">
+              <span id="artistFollowers" class="stat-val"></span>
+              <span class="stat-lbl">Followers</span>
             </div>
-            <div class="stat">
-              <span id="artistPopularity"></span>
-              <label>Popularity</label>
+            <div class="stat-pill">
+              <span id="artistPopularity" class="stat-val"></span>
+              <span class="stat-lbl">Popularity</span>
             </div>
-            <div class="stat">
-              <span id="albumCount"></span>
-              <label>Albums</label>
+            <div class="stat-pill">
+              <span id="albumCount" class="stat-val"></span>
+              <span class="stat-lbl">Releases</span>
             </div>
           </div>
         </div>
@@ -54,64 +70,59 @@
     </section>
 
     <!-- Filter Bar -->
-    <section id="filterSection" class="filter-section hidden">
-      <div class="filters">
-        <button class="filter-btn active" data-type="all">All</button>
-        <button class="filter-btn" data-type="album">Albums</button>
-        <button class="filter-btn" data-type="single">Singles</button>
-        <button class="filter-btn" data-type="compilation">Compilations</button>
+    <section id="filterSection" class="hidden">
+      <div class="filter-wrap">
+        <button class="filter-btn active" data-type="all">✦ All</button>
+        <button class="filter-btn" data-type="album">💿 Albums</button>
+        <button class="filter-btn" data-type="single">🎵 Singles</button>
+        <button class="filter-btn" data-type="compilation">📀 Compilations</button>
       </div>
     </section>
 
     <!-- Albums Grid -->
-    <section id="albumsSection" class="albums-section hidden">
+    <section id="albumsSection" class="hidden">
       <div id="albumsGrid" class="albums-grid"></div>
     </section>
 
-    <!-- Loading Spinner -->
+    <!-- Loader -->
     <div id="loader" class="loader hidden">
-      <div class="spinner"></div>
+      <div class="loader-ring"></div>
       <p>Fetching discography…</p>
     </div>
 
-    <!-- 🎵 MY PLAYLIST SECTION -->
+    <!-- Playlist Section -->
     <section class="playlist-section">
       <div class="playlist-header">
-        <div class="playlist-title-row">
-          <span class="playlist-icon">🎧</span>
+        <div class="playlist-left">
+          <div class="playlist-icon-wrap">🎧</div>
           <div>
-            <h2 class="playlist-heading">My Top Tracks</h2>
-            <p class="playlist-sub">Listen while you browse — curated by me</p>
+            <h2 class="playlist-title">Top Music Picks</h2>
+            <p class="playlist-sub">Hand-picked tracks — listen while you browse</p>
           </div>
         </div>
-        <span class="playlist-badge">My Playlist</span>
+        <span class="playlist-badge">Playlist</span>
       </div>
-
-      <div class="playlist-embed-wrap">
+      <div class="playlist-frame glass">
         <iframe
-          title="Spotify Embed: My Top Tracks Playlist"
-          src="https://open.spotify.com/embed/playlist/0WFR6ODW9THPIc4J2gEuI8"
+          title="Spotify Playlist"
+          src="https://open.spotify.com/embed/playlist/37i9dQZF1DXad2sxzzYX1N"
           width="100%"
-          height="380"
-          style="min-height: 360px"
+          height="400"
           frameBorder="0"
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
           loading="lazy"
         ></iframe>
       </div>
-
       <p class="playlist-hint">
-        💡 Click any song to preview it, or
-        <a href="https://open.spotify.com/playlist/0WFR6ODW9THPIc4J2gEuI8" target="_blank" rel="noopener">
-          open the full playlist in Spotify
-        </a>
+        🎵 Preview tracks here or
+        <a href="https://open.spotify.com/playlist/37i9dQZF1DXad2sxzzYX1N" target="_blank" rel="noopener">open in Spotify</a>
       </p>
     </section>
 
   </main>
 
   <footer>
-    <p>Powered by <a href="https://developer.spotify.com" target="_blank">Spotify API</a></p>
+    <p>Built with ❤️ · Powered by <a href="https://developer.spotify.com" target="_blank">Spotify API</a></p>
   </footer>
 
   <script src="app.js"></script>
