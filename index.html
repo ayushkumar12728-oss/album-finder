@@ -121,6 +121,35 @@
 
   </main>
 
+  <!-- Album Tracklist Modal -->
+  <div id="albumModal" class="modal-overlay hidden">
+    <div class="modal-card glass">
+      <button id="modalClose" class="modal-close" aria-label="Close">✕</button>
+
+      <div class="modal-header">
+        <img id="modalAlbumImg" class="modal-album-img" src="" alt="" />
+        <div class="modal-album-meta">
+          <p class="modal-album-type" id="modalAlbumType"></p>
+          <h3 id="modalAlbumName"></h3>
+          <p id="modalAlbumSub" class="modal-album-sub"></p>
+        </div>
+      </div>
+
+      <div id="modalBody" class="modal-body">
+        <div id="modalLoader" class="modal-loader hidden">
+          <div class="loader-ring small"></div>
+          <p>Loading tracklist…</p>
+        </div>
+        <div id="modalError" class="error-msg hidden"></div>
+        <ol id="trackList" class="track-list"></ol>
+      </div>
+
+      <a id="modalSpotifyLink" class="modal-spotify-link" href="#" target="_blank" rel="noopener">
+        ▶ Open album in Spotify
+      </a>
+    </div>
+  </div>
+
   <footer>
     <p>Built with ❤️ · Powered by <a href="https://developer.spotify.com" target="_blank">Spotify API</a></p>
   </footer>

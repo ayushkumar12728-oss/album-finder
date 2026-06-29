@@ -25,6 +25,17 @@ const filterBtns      = document.querySelectorAll(".filter-btn");
 const albumsSection   = document.getElementById("albumsSection");
 const albumsGrid      = document.getElementById("albumsGrid");
 
+const albumModal       = document.getElementById("albumModal");
+const modalClose       = document.getElementById("modalClose");
+const modalAlbumImg    = document.getElementById("modalAlbumImg");
+const modalAlbumType   = document.getElementById("modalAlbumType");
+const modalAlbumName   = document.getElementById("modalAlbumName");
+const modalAlbumSub    = document.getElementById("modalAlbumSub");
+const modalLoader      = document.getElementById("modalLoader");
+const modalError       = document.getElementById("modalError");
+const trackList        = document.getElementById("trackList");
+const modalSpotifyLink = document.getElementById("modalSpotifyLink");
+
 // ── State ───────────────────────────────────────────────────
 let accessToken  = null;
 let tokenExpiry  = 0;
@@ -36,6 +47,14 @@ function formatNumber(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
   if (n >= 1_000)     return (n / 1_000).toFixed(1) + "K";
   return n.toString();
+}
+
+function formatDuration(ms) {
+  if (!ms) return "—";
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function showError(msg) {
@@ -131,6 +150,19 @@ async function fetchAllAlbums(artistId) {
   });
 }
 
+async function fetchAlbumTracks(albumId) {
+  let tracks = [];
+  let url = `${SPOTIFY_API}/albums/${albumId}/tracks?limit=10`;
+
+  while (url) {
+    const data = await spotifyFetch(url);
+    if (Array.isArray(data.items)) tracks.push(...data.items);
+    url = data.next;
+  }
+
+  return tracks;
+}
+
 // ── Render ───────────────────────────────────────────────────
 function renderArtist(artist, albumCount) {
   const img = artist.images?.[0]?.url || "";
@@ -163,7 +195,6 @@ function renderAlbums(albums) {
     const img    = album.images?.[0]?.url || "";
     const type   = album.album_type ?? "album";
     const tracks = album.total_tracks;
-    const url    = album.external_urls?.spotify ?? "#";
 
     const card = document.createElement("div");
     card.className = "album-card";
@@ -178,7 +209,7 @@ function renderAlbums(albums) {
         <p class="album-tracks">${tracks} track${tracks !== 1 ? "s" : ""}</p>
       </div>
     `;
-    card.addEventListener("click", () => window.open(url, "_blank"));
+    card.addEventListener("click", () => openAlbumModal(album));
     albumsGrid.appendChild(card);
   });
 
@@ -192,6 +223,60 @@ function applyFilter(type) {
   });
   const filtered = type === "all" ? allAlbums : allAlbums.filter((a) => a.album_type === type);
   renderAlbums(filtered);
+}
+
+// ── Album Modal ─────────────────────────────────────────────
+function renderTracks(tracks) {
+  trackList.innerHTML = "";
+
+  if (tracks.length === 0) {
+    trackList.innerHTML = `<p style="color:var(--muted)">No track info available.</p>`;
+    return;
+  }
+
+  tracks.forEach((track) => {
+    const li = document.createElement("li");
+    li.className = "track-row";
+    li.innerHTML = `
+      <span class="track-num">${track.track_number ?? "—"}</span>
+      <span class="track-name" title="${track.name}">${track.name}</span>
+      ${track.explicit ? `<span class="track-explicit">E</span>` : ""}
+      <span class="track-duration">${formatDuration(track.duration_ms)}</span>
+    `;
+    trackList.appendChild(li);
+  });
+}
+
+async function openAlbumModal(album) {
+  // Populate header immediately — we already have this data.
+  modalAlbumImg.src     = album.images?.[0]?.url || "";
+  modalAlbumImg.alt     = album.name;
+  modalAlbumType.textContent = album.album_type ?? "album";
+  modalAlbumName.textContent = album.name;
+  const year = album.release_date?.slice(0, 4) ?? "—";
+  modalAlbumSub.textContent  = `${year} · ${album.total_tracks ?? "?"} track${album.total_tracks !== 1 ? "s" : ""}`;
+  modalSpotifyLink.href = album.external_urls?.spotify ?? "#";
+
+  trackList.innerHTML = "";
+  modalError.classList.add("hidden");
+  modalLoader.classList.remove("hidden");
+  albumModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  try {
+    const tracks = await fetchAlbumTracks(album.id);
+    renderTracks(tracks);
+  } catch (err) {
+    modalError.textContent = "⚠️ " + err.message;
+    modalError.classList.remove("hidden");
+  } finally {
+    modalLoader.classList.add("hidden");
+  }
+}
+
+function closeAlbumModal() {
+  albumModal.classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
 // ── Main search flow ─────────────────────────────────────────
@@ -231,4 +316,12 @@ artistInput.addEventListener("keydown", (e) => {
 });
 filterBtns.forEach((btn) => {
   btn.addEventListener("click", () => applyFilter(btn.dataset.type));
+});
+
+modalClose.addEventListener("click", closeAlbumModal);
+albumModal.addEventListener("click", (e) => {
+  if (e.target === albumModal) closeAlbumModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !albumModal.classList.contains("hidden")) closeAlbumModal();
 });
