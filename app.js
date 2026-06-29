@@ -100,9 +100,10 @@ async function getAccessToken(forceRefresh = false) {
 }
 
 // Wraps a Spotify fetch; if it 401s (expired/invalid token), refreshes
-// the token once and retries automatically. Also retries once on a
-// malformed/empty body or a 429/5xx, since Spotify occasionally returns
-// a blank or truncated response under load.
+// the token once and retries automatically. On a 429 (rate limit), it
+// shows a clear message instead of retrying blindly — Spotify's Client
+// Credentials tier has tight limits, and a 1-shot retry usually just
+// hits the same wall.
 async function spotifyFetch(url, _retried = false) {
   let token = await getAccessToken();
   let res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -112,9 +113,15 @@ async function spotifyFetch(url, _retried = false) {
     return spotifyFetch(url, true);
   }
 
-  if ((res.status === 429 || res.status >= 500) && !_retried) {
-    const retryAfter = Number(res.headers.get("Retry-After")) || 1;
-    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+  if (res.status === 429) {
+    const retryAfter = Number(res.headers.get("Retry-After")) || 30;
+    throw new Error(
+      `Spotify is rate-limiting requests right now. Please wait ${retryAfter}s and try again.`
+    );
+  }
+
+  if (res.status >= 500 && !_retried) {
+    await new Promise((r) => setTimeout(r, 1000));
     return spotifyFetch(url, true);
   }
 
