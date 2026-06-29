@@ -114,7 +114,7 @@ async function searchArtist(query) {
 
 async function fetchAllAlbums(artistId) {
   let albums = [];
-  let url = `${SPOTIFY_API}/artists/${artistId}/albums?include_groups=album,single,compilation&limit=50&market=US`;
+  let url = `${SPOTIFY_API}/artists/${artistId}/albums?include_groups=album,single,compilation&limit=10&market=US`;
 
   while (url) {
     const data = await spotifyFetch(url);
@@ -137,8 +137,14 @@ function renderArtist(artist, albumCount) {
   artistImage.src               = img;
   artistName.textContent        = artist.name;
   artistGenres.textContent      = artist.genres?.slice(0, 3).join(" · ") || "—";
-  artistFollowers.textContent   = formatNumber(artist.followers?.total ?? 0);
+
+  // Spotify's Feb 2026 Dev Mode changes removed `followers` and `popularity`
+  // from artist responses, so these may simply be absent now.
+  artistFollowers.textContent   = artist.followers?.total != null
+    ? formatNumber(artist.followers.total)
+    : "—";
   artistPopularity.textContent  = artist.popularity ?? "—";
+
   albumCountEl.textContent      = albumCount;
   artistSection.classList.remove("hidden");
 }
