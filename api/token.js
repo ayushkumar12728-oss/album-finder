@@ -32,7 +32,7 @@ function getSpotifyToken() {
       res.on("end", () => {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.access_token) resolve(parsed.access_token);
+          if (parsed.access_token) resolve(parsed);
           else reject(new Error("Spotify returned: " + data));
         } catch (e) {
           reject(e);
@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
 
   try {
     const token = await getSpotifyToken();
-    res.status(200).json({ access_token: token });
+    res.status(200).json({ access_token: token.access_token, expires_in: token.expires_in });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

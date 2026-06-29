@@ -27,6 +27,7 @@ const albumsGrid      = document.getElementById("albumsGrid");
 
 // ── State ───────────────────────────────────────────────────
 let accessToken  = null;
+let tokenExpiry  = 0;
 let allAlbums    = [];
 let activeFilter = "all";
 
@@ -54,35 +55,70 @@ function hideAll() {
 }
 
 // ── Token ────────────────────────────────────────────────────
-async function getAccessToken() {
-  if (accessToken) return accessToken;
-  const res  = await fetch(TOKEN_SERVER);
-  const data = await res.json();
-  if (!data.access_token) throw new Error("Could not get Spotify token. Check your setup.");
+async function getAccessToken(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && accessToken && now < tokenExpiry) return accessToken;
+
+  const res = await fetch(TOKEN_SERVER);
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Token server returned an invalid response.");
+  }
+  if (!res.ok || !data.access_token) {
+    throw new Error(data.error || "Could not get Spotify token. Check your setup.");
+  }
+
   accessToken = data.access_token;
+  // Spotify tokens last 3600s; refresh a bit early to be safe.
+  const ttlSeconds = data.expires_in ?? 3600;
+  tokenExpiry = now + (ttlSeconds - 60) * 1000;
   return accessToken;
+}
+
+// Wraps a Spotify fetch; if it 401s (expired/invalid token), refreshes
+// the token once and retries automatically.
+async function spotifyFetch(url) {
+  let token = await getAccessToken();
+  let res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+  if (res.status === 401) {
+    token = await getAccessToken(true);
+    res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Spotify returned an unreadable response.");
+  }
+
+  if (!res.ok) {
+    const message = data?.error?.message || `Spotify error (status ${res.status})`;
+    throw new Error(message);
+  }
+
+  return data;
 }
 
 // ── Spotify API calls ────────────────────────────────────────
 async function searchArtist(query) {
-  const token = await getAccessToken();
   const url   = `${SPOTIFY_API}/search?q=${encodeURIComponent(query)}&type=artist&limit=1`;
-  const res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  const data  = await res.json();
+  const data  = await spotifyFetch(url);
   const artist = data.artists?.items?.[0];
   if (!artist) throw new Error(`No artist found for "${query}"`);
   return artist;
 }
 
 async function fetchAllAlbums(artistId) {
-  const token  = await getAccessToken();
-  let albums   = [];
+  let albums = [];
   let url = `${SPOTIFY_API}/artists/${artistId}/albums?include_groups=album,single,compilation&limit=50&market=US`;
 
   while (url) {
-    const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    albums.push(...data.items);
+    const data = await spotifyFetch(url);
+    if (Array.isArray(data.items)) albums.push(...data.items);
     url = data.next;
   }
 
