@@ -30,13 +30,17 @@ function getSpotifyToken() {
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (parsed.access_token) resolve(parsed);
-          else reject(new Error("Spotify returned: " + data));
-        } catch (e) {
-          reject(e);
+        if (!data) {
+          return reject(new Error("Spotify returned an empty response."));
         }
+        let parsed;
+        try {
+          parsed = JSON.parse(data);
+        } catch {
+          return reject(new Error("Spotify returned a malformed response."));
+        }
+        if (parsed.access_token) resolve(parsed);
+        else reject(new Error(parsed.error_description || parsed.error || "Spotify did not return an access token."));
       });
     });
 

@@ -79,14 +79,17 @@ async function getAccessToken(forceRefresh = false) {
   if (!forceRefresh && accessToken && now < tokenExpiry) return accessToken;
 
   const res = await fetch(TOKEN_SERVER);
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error("Token server returned an invalid response.");
+  const raw = await res.text();
+  let data  = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error("Token server returned an invalid response. Please try again.");
+    }
   }
-  if (!res.ok || !data.access_token) {
-    throw new Error(data.error || "Could not get Spotify token. Check your setup.");
+  if (!res.ok || !data?.access_token) {
+    throw new Error(data?.error || "Could not get Spotify token. Check your setup.");
   }
 
   accessToken = data.access_token;
@@ -97,21 +100,35 @@ async function getAccessToken(forceRefresh = false) {
 }
 
 // Wraps a Spotify fetch; if it 401s (expired/invalid token), refreshes
-// the token once and retries automatically.
-async function spotifyFetch(url) {
+// the token once and retries automatically. Also retries once on a
+// malformed/empty body or a 429/5xx, since Spotify occasionally returns
+// a blank or truncated response under load.
+async function spotifyFetch(url, _retried = false) {
   let token = await getAccessToken();
   let res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
-  if (res.status === 401) {
-    token = await getAccessToken(true);
-    res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 401 && !_retried) {
+    await getAccessToken(true);
+    return spotifyFetch(url, true);
   }
 
-  let data;
-  try {
-    data = await res.json();
-  } catch {
-    throw new Error("Spotify returned an unreadable response.");
+  if ((res.status === 429 || res.status >= 500) && !_retried) {
+    const retryAfter = Number(res.headers.get("Retry-After")) || 1;
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    return spotifyFetch(url, true);
+  }
+
+  const raw = await res.text();
+  let data  = null;
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      // Body wasn't empty but also wasn't valid JSON — retry once,
+      // since this is usually a transient hiccup rather than a real error.
+      if (!_retried) return spotifyFetch(url, true);
+      throw new Error("Spotify returned an unreadable response. Please try again.");
+    }
   }
 
   if (!res.ok) {
@@ -119,7 +136,7 @@ async function spotifyFetch(url) {
     throw new Error(message);
   }
 
-  return data;
+  return data ?? {};
 }
 
 // ── Spotify API calls ────────────────────────────────────────
