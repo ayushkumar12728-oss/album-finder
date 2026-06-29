@@ -1,0 +1,4 @@
+# Never push secrets to GitHub
+.env
+node_modules/
+.DS_Store

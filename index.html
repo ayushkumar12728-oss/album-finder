@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Album Finder 🎵</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🎵 AlbumFinder</div>
+    <p class="tagline">Discover every album from your favorite artist</p>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <div class="search-box">
+        <input
+          type="text"
+          id="artistInput"
+          placeholder="Enter artist name… e.g. Taylor Swift"
+          autocomplete="off"
+        />
+        <button id="searchBtn">Search</button>
+      </div>
+      <div id="errorMsg" class="error-msg hidden"></div>
+    </section>
+
+    <!-- Artist Profile Card -->
+    <section id="artistSection" class="artist-section hidden">
+      <div class="artist-card">
+        <img id="artistImage" src="" alt="Artist" />
+        <div class="artist-info">
+          <h2 id="artistName"></h2>
+          <p id="artistGenres" class="genres"></p>
+          <div class="artist-stats">
+            <div class="stat">
+              <span id="artistFollowers"></span>
+              <label>Followers</label>
+            </div>
+            <div class="stat">
+              <span id="artistPopularity"></span>
+              <label>Popularity</label>
+            </div>
+            <div class="stat">
+              <span id="albumCount"></span>
+              <label>Albums</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter Bar -->
+    <section id="filterSection" class="filter-section hidden">
+      <div class="filters">
+        <button class="filter-btn active" data-type="all">All</button>
+        <button class="filter-btn" data-type="album">Albums</button>
+        <button class="filter-btn" data-type="single">Singles</button>
+        <button class="filter-btn" data-type="compilation">Compilations</button>
+      </div>
+    </section>
+
+    <!-- Albums Grid -->
+    <section id="albumsSection" class="albums-section hidden">
+      <div id="albumsGrid" class="albums-grid"></div>
+    </section>
+
+    <!-- Loading Spinner -->
+    <div id="loader" class="loader hidden">
+      <div class="spinner"></div>
+      <p>Fetching discography…</p>
+    </div>
+
+    <!-- 🎵 MY PLAYLIST SECTION -->
+    <section class="playlist-section">
+      <div class="playlist-header">
+        <div class="playlist-title-row">
+          <span class="playlist-icon">🎧</span>
+          <div>
+            <h2 class="playlist-heading">My Top Tracks</h2>
+            <p class="playlist-sub">Listen while you browse — curated by me</p>
+          </div>
+        </div>
+        <span class="playlist-badge">My Playlist</span>
+      </div>
+
+      <div class="playlist-embed-wrap">
+        <iframe
+          title="Spotify Embed: My Top Tracks Playlist"
+          src="https://open.spotify.com/embed/playlist/0WFR6ODW9THPIc4J2gEuI8"
+          width="100%"
+          height="380"
+          style="min-height: 360px"
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+        ></iframe>
+      </div>
+
+      <p class="playlist-hint">
+        💡 Click any song to preview it, or
+        <a href="https://open.spotify.com/playlist/0WFR6ODW9THPIc4J2gEuI8" target="_blank" rel="noopener">
+          open the full playlist in Spotify
+        </a>
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Powered by <a href="https://developer.spotify.com" target="_blank">Spotify API</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
